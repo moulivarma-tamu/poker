@@ -225,6 +225,22 @@ h1 {
   bottom: 30px; 
   left: 50%; 
   transform: translateX(-50%); 
+  /* make room for larger player cards */
+  width: 200px;
+}
+
+/* Make only the local player's cards larger so other players stay the same */
+#player-cards-1 .card {
+  width: 80px; /* larger card width for the player's own hand */
+  height: 120px; /* larger card height */
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s;
+}
+
+/* Slightly stronger hover for the player's cards */
+#player-cards-1 .card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 14px 34px rgba(255, 215, 0, 0.45);
+  z-index: 300;
 }
 
 .player-slot.pos-2 { top: 350px; left: 40px; }
