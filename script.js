@@ -1,60 +1,28 @@
-
-const deck = [];
 const suits = ["H", "S", "D", "C"];
-const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+const values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+const suitSymbols = { H: "♥", S: "♠", D: "♦", C: "♣" };
+const suitColors = { H: "red", S: "black", D: "red", C: "black" };
 
-// Hold'em constants
-const initialCardsPerPlayer = 2; 
-let communityCards = []; 
-let fullDeck = []; 
-
-// --- NEW CARD BACK FILENAMES (Assuming you create a 'Black' version) ---
-const CARD_BACK_RED_IMG = 'assets/Suit=Other, Number=Back Red.png';
-const CARD_BACK_BLACK_IMG = 'assets/Suit=Other, Number=Back Blue.png'; // <--- ASSUMES THIS FILE EXISTS
-
-// Mapping short codes to full file names for your custom assets
-const valueMap = { 
-  "A": "Ace", 
-  "J": "Jack", 
-  "Q": "Queen", 
-  "K": "King" 
+let gameState = {
+  players: [],
+  communityCards: [],
+  pot: 0,
+  currentBet: 0,
+  currentPlayerIndex: 0,
+  stage: 'preflop',
+  deck: [],
+  dealerIndex: 0,
+  bettingRound: 0
 };
 
-const suitMap = { 
-  "H": "Hearts", 
-  "S": "Spades", 
-  "D": "Diamonds", 
-  "C": "Clubs" 
-};
-
-// --- NEW FUNCTION: Determine card back based on suit color ---
-function getCardBackImage(suitCode) {
-    // Hearts (H) and Diamonds (D) are RED suits
-    if (suitCode === 'H' || suitCode === 'D') {
-        return CARD_BACK_BLACK_IMG; // Use a contrasting Black back for RED suits
+function createDeck() {
+  const deck = [];
+  for (let s of suits) {
+    for (let v of values) {
+      deck.push({ suit: s, value: v, name: `${v}${s}` });
     }
-    // Spades (S) and Clubs (C) are BLACK suits
-    return CARD_BACK_RED_IMG; // Use a contrasting Red back for BLACK suits
-}
-
-// Function to construct the asset file path (uses 'assets/' directory)
-function getCardFileName(valueCode, suitCode) {
-  const fullSuitName = suitMap[suitCode];
-  const fullValueName = valueMap[valueCode] || valueCode; 
-  return `assets/Suit=${fullSuitName}, Number=${fullValueName}.png`;
-}
-
-
-// Create the full 52-card deck
-for (let s of suits) {
-  for (let v of values) {
-    deck.push({
-      // We store the full suit code in the card object
-      suit: s, 
-      name: `${v}${s}`,
-      img: getCardFileName(v, s) 
-    });
   }
+  return deck;
 }
 
 function shuffle(array) {
@@ -64,165 +32,438 @@ function shuffle(array) {
   }
 }
 
-// Function to display cards, handling face-up or face-down state
-function displayCards(containerId, cards, isPlayer = false, showAll = false) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    
-    const faceDown = !showAll && !isPlayer;
-
-    [...cards].reverse().forEach(card => {
-        const img = document.createElement("img");
-        
-        if (faceDown) {
-            // --- LOGIC APPLIED HERE ---
-            img.src = getCardBackImage(card.suit); 
-            img.classList.add('face-down');
-        } else {
-            img.src = card.img; 
-        }
-
-        container.appendChild(img);
-    });
+function createCardElement(card, faceUp = true) {
+  const div = document.createElement('div');
+  div.className = `card ${faceUp ? suitColors[card.suit] : 'face-down'}`;
+  
+  if (faceUp) {
+    div.innerHTML = `
+      <div style="font-size: 0.6em; align-self: flex-start; margin: 5px 0 0 8px;">${card.value}</div>
+      <div>${suitSymbols[card.suit]}</div>
+      <div style="font-size: 0.6em; align-self: flex-end; margin: 0 8px 5px 0; transform: rotate(180deg);">${card.value}</div>
+    `;
+  } else {
+    div.textContent = '🎴';
+  }
+  
+  return div;
 }
 
-// Dynamically creates and positions opponent slots
+function displayCards(containerId, cards, showFaceUp = false) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  container.innerHTML = "";
+  cards.forEach(card => {
+    container.appendChild(createCardElement(card, showFaceUp));
+  });
+}
+
 function setupPlayerSlots(numPlayers) {
-    const opponentContainer = document.getElementById("opponent-slots");
-    opponentContainer.innerHTML = "";
+  const opponentContainer = document.getElementById("opponent-slots");
+  opponentContainer.innerHTML = "";
+  
+  const botNames = ["Buck", "Aggie Spirit", "Jack", "Maroon Ace", "12th Man", "Hullabaloo"];
+  
+  for (let i = 2; i <= numPlayers + 1; i++) {
+    const slot = document.createElement("div");
+    slot.className = `player-slot pos-${i}`;
+    slot.id = `player-${i}`;
     
-    for (let i = 2; i <= numPlayers; i++) {
-        const slot = document.createElement("div");
-        slot.className = `player-slot pos-${i}`; 
-        slot.id = `player-${i}`;
-        
-        const handDiv = document.createElement("div");
-        handDiv.className = "hand";
-        handDiv.id = `player-cards-${i}`;
-        
-        const label = document.createElement("div");
-        label.className = "player-label";
-        label.textContent = `Player ${i}`;
-        
-        slot.appendChild(handDiv);
-        slot.appendChild(label);
-        opponentContainer.appendChild(slot);
-    }
+    slot.innerHTML = `
+      <div class="hand" id="player-cards-${i}"></div>
+      <div class="player-info">
+        <div class="player-name">${botNames[i - 2] || 'Bot ' + (i - 1)}</div>
+        <div class="player-chips" id="player-chips-${i}">$1000</div>
+        <div class="player-status" id="player-status-${i}"></div>
+      </div>
+    `;
+    
+    opponentContainer.appendChild(slot);
+  }
 }
 
-// --- CORE TEXAS HOLD'EM GAME FLOW ---
+function updateChips(playerId, amount) {
+  if (playerId === 'dealer') {
+    document.getElementById('dealer-chips').textContent = `$${amount}`;
+  } else {
+    document.getElementById(`player-chips-${playerId}`).textContent = `$${amount}`;
+  }
+}
 
-document.getElementById("start-game").addEventListener("click", () => {
-    const numPlayersInput = document.getElementById("num-players");
-    const totalPlayers = parseInt(numPlayersInput.value);
-    
-    const maxPlayersAllowed = Math.floor((deck.length - 5) / initialCardsPerPlayer) - 1; 
+function updateStatus(playerId, status) {
+  let el;
+  if (playerId === 'dealer') {
+    el = document.getElementById('dealer-status');
+  } else {
+    el = document.getElementById(`player-status-${playerId}`);
+  }
+  
+  if (el) {
+    el.textContent = status;
+    el.className = 'player-status' + (status.includes('Turn') || status.includes('Thinking') ? ' active' : '');
+  }
+}
 
-    if (totalPlayers < 1 || totalPlayers > maxPlayersAllowed) {
-        alert(`Please enter a number between 1 and ${maxPlayersAllowed}.`);
-        return;
+function updatePot() {
+  document.getElementById('pot-amount').textContent = gameState.pot;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function startGame() {
+  const numOpponents = parseInt(document.getElementById('num-players').value);
+  if (numOpponents < 1 || numOpponents > 6) {
+    alert('Please choose 1-6 opponents');
+    return;
+  }
+
+  document.getElementById('start-game').disabled = true;
+  setupPlayerSlots(numOpponents);
+  
+  // Clear table
+  document.getElementById('community-cards').innerHTML = "";
+  document.getElementById('dealer-cards').innerHTML = "";
+  document.getElementById('player-cards-1').innerHTML = "";
+  
+  // Reset all player slots
+  for (let i = 2; i <= 7; i++) {
+    const slot = document.getElementById(`player-${i}`);
+    if (slot) slot.classList.remove('folded');
+  }
+  document.getElementById('dealer').classList.remove('folded');
+  
+  // Initialize players
+  gameState.players = [];
+  gameState.players.push({ 
+    id: 1, 
+    chips: 1000, 
+    cards: [], 
+    currentBet: 0, 
+    folded: false, 
+    isHuman: true 
+  });
+  
+  for (let i = 2; i <= numOpponents + 1; i++) {
+    gameState.players.push({ 
+      id: i, 
+      chips: 1000, 
+      cards: [], 
+      currentBet: 0, 
+      folded: false, 
+      isHuman: false 
+    });
+  }
+  
+  // Add dealer
+  gameState.dealerIndex = gameState.players.length;
+  gameState.players.push({ 
+    id: 'dealer', 
+    chips: 1000, 
+    cards: [], 
+    currentBet: 0, 
+    folded: false, 
+    isHuman: false 
+  });
+  
+  // Deal cards
+  gameState.deck = createDeck();
+  shuffle(gameState.deck);
+  
+  let index = 0;
+  for (let player of gameState.players) {
+    player.cards = [gameState.deck[index++], gameState.deck[index++]];
+    const containerId = player.id === 'dealer' ? 'dealer-cards' : `player-cards-${player.id}`;
+    displayCards(containerId, player.cards, player.isHuman);
+  }
+  
+  // Community cards
+  index++; // burn
+  gameState.communityCards = gameState.deck.slice(index, index + 5);
+  
+  gameState.pot = 0;
+  gameState.currentBet = 0;
+  gameState.stage = 'preflop';
+  gameState.currentPlayerIndex = -1;
+  gameState.bettingRound = 0;
+  
+  document.getElementById('pot-display').classList.remove('hidden');
+  updatePot();
+  
+  await sleep(1000);
+  nextTurn();
+}
+
+async function nextTurn() {
+  const activePlayers = gameState.players.filter(p => !p.folded);
+  
+  if (activePlayers.length === 1) {
+    await declareWinner(activePlayers[0]);
+    return;
+  }
+  
+  let startIndex = gameState.currentPlayerIndex;
+  do {
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+  } while (gameState.players[gameState.currentPlayerIndex].folded);
+  
+  const player = gameState.players[gameState.currentPlayerIndex];
+  
+  // Check if betting round complete
+  const allBetsEqual = activePlayers.every(p => 
+    p.currentBet === gameState.currentBet || p.chips === 0
+  );
+  
+  if (allBetsEqual && gameState.currentPlayerIndex === 0 && gameState.bettingRound > 0) {
+    advanceStage();
+    return;
+  }
+  
+  gameState.bettingRound++;
+  
+  // Clear all statuses
+  gameState.players.forEach(p => {
+    const id = p.id === 'dealer' ? 'dealer' : p.id;
+    if (p !== player) updateStatus(id, '');
+  });
+  
+  if (player.isHuman) {
+    showPlayerActions();
+  } else {
+    await processBotTurn();
+  }
+}
+
+function showPlayerActions() {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  updateStatus(player.id, 'Your Turn!');
+  
+  document.getElementById('action-buttons').classList.remove('hidden');
+  document.getElementById('fold-btn').disabled = false;
+  
+  const callAmount = gameState.currentBet - player.currentBet;
+  
+  if (callAmount === 0) {
+    document.getElementById('check-btn').classList.remove('hidden');
+    document.getElementById('call-btn').classList.add('hidden');
+  } else {
+    document.getElementById('check-btn').classList.add('hidden');
+    document.getElementById('call-btn').classList.remove('hidden');
+    document.getElementById('call-amount').textContent = Math.min(callAmount, player.chips);
+  }
+  
+  document.getElementById('raise-btn').disabled = player.chips === 0;
+}
+
+function hidePlayerActions() {
+  document.getElementById('action-buttons').classList.add('hidden');
+}
+
+async function processBotTurn() {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  const playerId = player.id === 'dealer' ? 'dealer' : player.id;
+  
+  updateStatus(playerId, 'Thinking...');
+  await sleep(1200);
+  
+  const decision = botDecision(player);
+  await executeAction(player, decision);
+  
+  await sleep(800);
+  nextTurn();
+}
+
+function botDecision(player) {
+  const callAmount = gameState.currentBet - player.currentBet;
+  const rand = Math.random();
+  
+  if (callAmount === 0) {
+    if (rand < 0.5) {
+      return { action: 'check' };
+    } else {
+      const raiseAmount = Math.floor(Math.random() * 100) + 20;
+      return { action: 'raise', amount: Math.min(raiseAmount, player.chips) };
     }
-    
-    // 1. Reset Game
-    setupPlayerSlots(totalPlayers);
-    document.getElementById("community-cards").innerHTML = "";
-    communityCards = []; 
-    fullDeck = [...deck]; 
-    shuffle(fullDeck);
-    
-    // 2. Initial Deal (2 cards to Dealer and Players)
-    let cardIndex = 0;
-    
-    // Deal to Dealer (Reveille) - isPlayer=false (face down)
-    const dealerHand = fullDeck.slice(cardIndex, cardIndex + initialCardsPerPlayer);
-    displayCards("dealer-cards", dealerHand, false); 
-    cardIndex += initialCardsPerPlayer;
-
-    // Deal to all players (Player 1 is face up, others are face down)
-    for (let i = 1; i <= totalPlayers; i++) {
-        const playerHand = fullDeck.slice(cardIndex, cardIndex + initialCardsPerPlayer);
-        const isCurrentPlayer = (i === 1); 
-        displayCards(`player-cards-${i}`, playerHand, isCurrentPlayer); 
-        cardIndex += initialCardsPerPlayer;
+  } else {
+    if (rand < 0.25) {
+      return { action: 'fold' };
+    } else if (rand < 0.75) {
+      return { action: 'call', amount: Math.min(callAmount, player.chips) };
+    } else {
+      const raiseAmount = Math.floor(Math.random() * 100) + 50;
+      return { action: 'raise', amount: Math.min(raiseAmount, player.chips) };
     }
+  }
+}
 
-    // 3. Set up remaining deck for community cards (including burn cards)
-    cardIndex += 1; 
-    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 3)); 
-    cardIndex += 3;
-    cardIndex += 1; 
-    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 1)); 
-    cardIndex += 1;
-    cardIndex += 1; 
-    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 1)); 
+async function executeAction(player, decision) {
+  const playerId = player.id === 'dealer' ? 'dealer' : player.id;
+  
+  if (decision.action === 'fold') {
+    player.folded = true;
+    const slotId = player.id === 'dealer' ? 'dealer' : `player-${player.id}`;
+    document.getElementById(slotId).classList.add('folded');
+    updateStatus(playerId, 'Folded');
+  } else if (decision.action === 'check') {
+    updateStatus(playerId, 'Checked');
+  } else if (decision.action === 'call') {
+    const amount = decision.amount;
+    player.chips -= amount;
+    player.currentBet += amount;
+    gameState.pot += amount;
+    updateChips(playerId, player.chips);
+    updatePot();
+    updateStatus(playerId, `Called $${amount}`);
+  } else if (decision.action === 'raise') {
+    const amount = decision.amount;
+    player.chips -= amount;
+    player.currentBet += amount;
+    gameState.currentBet = player.currentBet;
+    gameState.pot += amount;
+    updateChips(playerId, player.chips);
+    updatePot();
+    updateStatus(playerId, `Raised to $${player.currentBet}`);
+  }
+}
 
-    // 4. Update UI buttons to start the game stage
-    document.getElementById("stage-buttons").classList.remove("hidden");
-    document.getElementById("start-game").disabled = true;
-    document.getElementById("flop-btn").disabled = false;
-    document.getElementById("turn-btn").disabled = true;
-    document.getElementById("river-btn").disabled = true;
-    document.getElementById("showdown-btn").disabled = true;
-});
+async function advanceStage() {
+  // Reset bets for next round
+  gameState.players.forEach(p => p.currentBet = 0);
+  gameState.currentBet = 0;
+  gameState.bettingRound = 0;
+  
+  if (gameState.stage === 'preflop') {
+    gameState.stage = 'flop';
+    displayCards('community-cards', gameState.communityCards.slice(0, 3), true);
+    await sleep(1500);
+  } else if (gameState.stage === 'flop') {
+    gameState.stage = 'turn';
+    displayCards('community-cards', gameState.communityCards.slice(0, 4), true);
+    await sleep(1500);
+  } else if (gameState.stage === 'turn') {
+    gameState.stage = 'river';
+    displayCards('community-cards', gameState.communityCards, true);
+    await sleep(1500);
+  } else if (gameState.stage === 'river') {
+    await showdown();
+    return;
+  }
+  
+  gameState.currentPlayerIndex = -1;
+  nextTurn();
+}
 
-
-// --- STAGED DEALING EVENT LISTENERS ---
-
-document.getElementById("flop-btn").addEventListener("click", () => {
-    const flop = communityCards.slice(0, 3);
-    displayCards("community-cards", flop, true, true); 
-
-    document.getElementById("flop-btn").disabled = true;
-    document.getElementById("turn-btn").disabled = false;
-});
-
-document.getElementById("turn-btn").addEventListener("click", () => {
-    const turn = communityCards.slice(0, 4);
-    displayCards("community-cards", turn, true, true); 
-
-    document.getElementById("turn-btn").disabled = true;
-    document.getElementById("river-btn").disabled = false;
-});
-
-document.getElementById("river-btn").addEventListener("click", () => {
-    const river = communityCards.slice(0, 5);
-    displayCards("community-cards", river, true, true); 
-
-    document.getElementById("river-btn").disabled = true;
-    document.getElementById("showdown-btn").disabled = false;
-});
-
-document.getElementById("showdown-btn").addEventListener("click", () => {
-    alert("Showdown! Reveille and all opponent hands are now revealed.");
-    
-    const totalPlayers = parseInt(document.getElementById("num-players").value);
-
-    // Get the exact cards from the dealt fullDeck slice
-    const dealerHand = fullDeck.slice(0, initialCardsPerPlayer); 
-    displayCards("dealer-cards", dealerHand, false, true); 
-
-    let cardIndex = initialCardsPerPlayer; 
-
-    for (let i = 1; i <= totalPlayers; i++) {
-        // Player 1 is revealed here, too.
-        const playerHand = fullDeck.slice(cardIndex, cardIndex + initialCardsPerPlayer); 
-        displayCards(`player-cards-${i}`, playerHand, false, true); // showAll = true
-        cardIndex += initialCardsPerPlayer;
+async function showdown() {
+  // Reveal all hands
+  for (let player of gameState.players) {
+    if (!player.folded) {
+      const containerId = player.id === 'dealer' ? 'dealer-cards' : `player-cards-${player.id}`;
+      displayCards(containerId, player.cards, true);
     }
-    
-    document.getElementById("showdown-btn").disabled = true;
-    document.getElementById("start-game").disabled = false;
+  }
+  
+  await sleep(2000);
+  
+  // Simple winner determination (random for demo)
+  const activePlayers = gameState.players.filter(p => !p.folded);
+  const winner = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+  winner.chips += gameState.pot;
+  
+  const winnerId = winner.id === 'dealer' ? 'dealer' : winner.id;
+  const winnerName = winner.id === 'dealer' ? 'Reveille' : winner.isHuman ? 'You' : `Player ${winner.id}`;
+  
+  updateStatus(winnerId, `Won $${gameState.pot}! 🏆`);
+  updateChips(winnerId, winner.chips);
+  
+  await sleep(1000);
+  alert(`${winnerName} won the pot of $${gameState.pot}!`);
+  
+  // Reset for new game
+  document.getElementById('start-game').disabled = false;
+  document.getElementById('pot-display').classList.add('hidden');
+}
+
+async function declareWinner(winner) {
+  winner.chips += gameState.pot;
+  
+  const winnerId = winner.id === 'dealer' ? 'dealer' : winner.id;
+  const winnerName = winner.id === 'dealer' ? 'Reveille' : winner.isHuman ? 'You' : `Player ${winner.id}`;
+  
+  updateStatus(winnerId, `Won $${gameState.pot}! 🏆`);
+  updateChips(winnerId, winner.chips);
+  
+  await sleep(1000);
+  alert(`${winnerName} won the pot of $${gameState.pot}! Everyone else folded.`);
+  
+  // Reset for new game
+  document.getElementById('start-game').disabled = false;
+  document.getElementById('pot-display').classList.add('hidden');
+}
+
+// Player action buttons
+document.getElementById('fold-btn').addEventListener('click', async () => {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  hidePlayerActions();
+  await executeAction(player, { action: 'fold' });
+  await sleep(500);
+  nextTurn();
 });
 
-
-// On load: Initialization
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById("dealer-cards").innerHTML = "";
-    document.getElementById("community-cards").innerHTML = "";
-    
-    const player1Hand = document.getElementById("player-cards-1");
-    if (player1Hand) {
-        player1Hand.innerHTML = "";
-    }
-    document.getElementById("stage-buttons").classList.add("hidden");
+document.getElementById('check-btn').addEventListener('click', async () => {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  hidePlayerActions();
+  await executeAction(player, { action: 'check' });
+  await sleep(500);
+  nextTurn();
 });
+
+document.getElementById('call-btn').addEventListener('click', async () => {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  const callAmount = Math.min(gameState.currentBet - player.currentBet, player.chips);
+  hidePlayerActions();
+  await executeAction(player, { action: 'call', amount: callAmount });
+  await sleep(500);
+  nextTurn();
+});
+
+document.getElementById('raise-btn').addEventListener('click', () => {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  document.getElementById('action-buttons').classList.add('hidden');
+  document.getElementById('bet-controls').classList.remove('hidden');
+  
+  const slider = document.getElementById('bet-slider');
+  const minRaise = gameState.currentBet + 10;
+  const maxRaise = player.chips + player.currentBet;
+  
+  slider.min = minRaise;
+  slider.max = maxRaise;
+  slider.value = Math.min(minRaise + 50, maxRaise);
+  
+  updateBetDisplay();
+});
+
+document.getElementById('bet-slider').addEventListener('input', updateBetDisplay);
+
+function updateBetDisplay() {
+  const amount = parseInt(document.getElementById('bet-slider').value);
+  document.getElementById('bet-amount-display').textContent = `$${amount}`;
+}
+
+document.getElementById('confirm-bet').addEventListener('click', async () => {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  const raiseAmount = parseInt(document.getElementById('bet-slider').value) - player.currentBet;
+  
+  document.getElementById('bet-controls').classList.add('hidden');
+  await executeAction(player, { action: 'raise', amount: raiseAmount });
+  await sleep(500);
+  nextTurn();
+});
+
+document.getElementById('cancel-bet').addEventListener('click', () => {
+  document.getElementById('bet-controls').classList.add('hidden');
+  showPlayerActions();
+});
+
+document.getElementById('start-game').addEventListener('click', startGame);
