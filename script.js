@@ -1,11 +1,16 @@
+
 const deck = [];
 const suits = ["H", "S", "D", "C"];
 const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
 // Hold'em constants
 const initialCardsPerPlayer = 2; 
-let communityCards = []; // Stores the 5 cards reserved for the center
-let fullDeck = []; // The active deck copy for the game
+let communityCards = []; 
+let fullDeck = []; 
+
+// --- NEW CARD BACK FILENAMES (Assuming you create a 'Black' version) ---
+const CARD_BACK_RED_IMG = 'assets/Suit=Other, Number=Back Red.png';
+const CARD_BACK_BLACK_IMG = 'assets/Suit=Other, Number=Back Blue.png'; // <--- ASSUMES THIS FILE EXISTS
 
 // Mapping short codes to full file names for your custom assets
 const valueMap = { 
@@ -22,6 +27,15 @@ const suitMap = {
   "C": "Clubs" 
 };
 
+// --- NEW FUNCTION: Determine card back based on suit color ---
+function getCardBackImage(suitCode) {
+    // Hearts (H) and Diamonds (D) are RED suits
+    if (suitCode === 'H' || suitCode === 'D') {
+        return CARD_BACK_BLACK_IMG; // Use a contrasting Black back for RED suits
+    }
+    // Spades (S) and Clubs (C) are BLACK suits
+    return CARD_BACK_RED_IMG; // Use a contrasting Red back for BLACK suits
+}
 
 // Function to construct the asset file path (uses 'assets/' directory)
 function getCardFileName(valueCode, suitCode) {
@@ -35,6 +49,8 @@ function getCardFileName(valueCode, suitCode) {
 for (let s of suits) {
   for (let v of values) {
     deck.push({
+      // We store the full suit code in the card object
+      suit: s, 
       name: `${v}${s}`,
       img: getCardFileName(v, s) 
     });
@@ -53,19 +69,17 @@ function displayCards(containerId, cards, isPlayer = false, showAll = false) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
     
-    // Cards are face-down IF: 
-    // 1. We are not at showdown (showAll is false) 
-    // 2. AND the hand belongs to the Dealer or an Opponent (isPlayer is false)
     const faceDown = !showAll && !isPlayer;
 
     [...cards].reverse().forEach(card => {
         const img = document.createElement("img");
         
-        // Use the card back image for face-down cards
-        img.src = faceDown ? 'assets/card_back.png' : card.img; 
-        
         if (faceDown) {
+            // --- LOGIC APPLIED HERE ---
+            img.src = getCardBackImage(card.suit); 
             img.classList.add('face-down');
+        } else {
+            img.src = card.img; 
         }
 
         container.appendChild(img);
@@ -102,7 +116,6 @@ document.getElementById("start-game").addEventListener("click", () => {
     const numPlayersInput = document.getElementById("num-players");
     const totalPlayers = parseInt(numPlayersInput.value);
     
-    const totalHands = totalPlayers + 1;
     const maxPlayersAllowed = Math.floor((deck.length - 5) / initialCardsPerPlayer) - 1; 
 
     if (totalPlayers < 1 || totalPlayers > maxPlayersAllowed) {
@@ -128,21 +141,20 @@ document.getElementById("start-game").addEventListener("click", () => {
     // Deal to all players (Player 1 is face up, others are face down)
     for (let i = 1; i <= totalPlayers; i++) {
         const playerHand = fullDeck.slice(cardIndex, cardIndex + initialCardsPerPlayer);
-        // isPlayer is true ONLY for Player 1 (i=1)
         const isCurrentPlayer = (i === 1); 
         displayCards(`player-cards-${i}`, playerHand, isCurrentPlayer); 
         cardIndex += initialCardsPerPlayer;
     }
 
     // 3. Set up remaining deck for community cards (including burn cards)
-    cardIndex += 1; // Burn 1 card
-    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 3)); // Flop (3 cards)
+    cardIndex += 1; 
+    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 3)); 
     cardIndex += 3;
-    cardIndex += 1; // Burn 1 card
-    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 1)); // Turn (1 card)
+    cardIndex += 1; 
+    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 1)); 
     cardIndex += 1;
-    cardIndex += 1; // Burn 1 card
-    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 1)); // River (1 card)
+    cardIndex += 1; 
+    communityCards.push(...fullDeck.slice(cardIndex, cardIndex + 1)); 
 
     // 4. Update UI buttons to start the game stage
     document.getElementById("stage-buttons").classList.remove("hidden");
@@ -157,16 +169,14 @@ document.getElementById("start-game").addEventListener("click", () => {
 // --- STAGED DEALING EVENT LISTENERS ---
 
 document.getElementById("flop-btn").addEventListener("click", () => {
-    // Flop: Deal first 3 community cards
     const flop = communityCards.slice(0, 3);
-    displayCards("community-cards", flop, true, true); // Community cards are always face-up
+    displayCards("community-cards", flop, true, true); 
 
     document.getElementById("flop-btn").disabled = true;
     document.getElementById("turn-btn").disabled = false;
 });
 
 document.getElementById("turn-btn").addEventListener("click", () => {
-    // Turn: Deal the 4th community card
     const turn = communityCards.slice(0, 4);
     displayCards("community-cards", turn, true, true); 
 
@@ -175,7 +185,6 @@ document.getElementById("turn-btn").addEventListener("click", () => {
 });
 
 document.getElementById("river-btn").addEventListener("click", () => {
-    // River: Deal the 5th community card
     const river = communityCards.slice(0, 5);
     displayCards("community-cards", river, true, true); 
 
@@ -186,21 +195,19 @@ document.getElementById("river-btn").addEventListener("click", () => {
 document.getElementById("showdown-btn").addEventListener("click", () => {
     alert("Showdown! Reveille and all opponent hands are now revealed.");
     
-    // Show ALL hands (Dealer and all opponents)
     const totalPlayers = parseInt(document.getElementById("num-players").value);
 
-    // Reveal Dealer's Hand
-    const dealerHand = fullDeck.slice(2, 4); // Dealer's cards were the first 2 dealt
-    displayCards("dealer-cards", dealerHand, false, true); // showAll = true
+    // Get the exact cards from the dealt fullDeck slice
+    const dealerHand = fullDeck.slice(0, initialCardsPerPlayer); 
+    displayCards("dealer-cards", dealerHand, false, true); 
 
-    // Reveal Opponents' Hands
-    let cardIndex = 4; // Start index after dealer and player 1 (Player 1 has indices 4, 5)
+    let cardIndex = initialCardsPerPlayer; 
 
-    for (let i = 2; i <= totalPlayers; i++) {
-        // Player's 2 cards are always 2 cards after the previous player
-        const opponentHand = fullDeck.slice(cardIndex + 2, cardIndex + 4); 
-        displayCards(`player-cards-${i}`, opponentHand, false, true); // showAll = true
-        cardIndex += 2;
+    for (let i = 1; i <= totalPlayers; i++) {
+        // Player 1 is revealed here, too.
+        const playerHand = fullDeck.slice(cardIndex, cardIndex + initialCardsPerPlayer); 
+        displayCards(`player-cards-${i}`, playerHand, false, true); // showAll = true
+        cardIndex += initialCardsPerPlayer;
     }
     
     document.getElementById("showdown-btn").disabled = true;

@@ -1,86 +1,80 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 body {
-    background-color: #003311; /* Richer, deeper table green */
+    background: radial-gradient(circle at top, #002200 0%, #000 100%);
     color: white;
     text-align: center;
     font-family: 'Roboto', sans-serif;
     min-height: 100vh;
+    margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
-    margin: 0;
+    overflow-x: hidden;
 }
 
 h1 {
     color: #ffd700;
-    margin-bottom: 20px;
-    letter-spacing: 2px;
+    margin-top: 30px;
+    margin-bottom: 10px;
+    font-size: 2.5em;
+    text-shadow: 0 0 10px #ffdf00, 0 0 20px #ffdf00;
+    letter-spacing: 3px;
 }
 
 #table {
-    background-color: #00441b;
-    border: 15px solid #4a2500; /* Wood border */
+    background: radial-gradient(circle at center, #00441b 0%, #002b10 100%);
+    border: 15px solid #4a2500;
     border-radius: 50%;
-    width: 800px;
-    height: 500px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5) inset;
+    width: 850px;
+    height: 550px;
+    box-shadow: 0 0 80px rgba(0, 0, 0, 0.8) inset, 0 0 30px rgba(255, 215, 0, 0.3);
     position: relative;
-    margin-top: 20px;
+    margin-top: 30px;
+    overflow: hidden;
 }
 
-/* ------------------ General Card Styles ------------------ */
+/* ------------------ Card Styles ------------------ */
 
 .hand {
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .hand img {
-    /* Smaller size to ensure 5 community cards fit and all player hands are visible */
-    width: 70px; 
-    /* Reduced horizontal margin for slight overlap on hole cards (Dealer/Players) */
-    margin: 0 -10px 0 0; 
-    border-radius: 8px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
-    transition: transform 0.3s ease-out;
+    width: 70px;
+    margin: 0 3px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.hand img:last-child {
-    margin-right: 0;
+.hand img:hover {
+    transform: translateY(-10px) scale(1.08);
+    box-shadow: 0 0 15px rgba(255,255,255,0.6);
 }
 
-/* Face-down cards can optionally have a different visual style */
-.hand img.face-down {
-    /* border: 3px solid maroon; */
-}
-
-/* ------------------ Community Cards (Fixed Layout) ------------------ */
+/* ------------------ Community Cards ------------------ */
 
 #community-cards-area {
     position: absolute;
-    /* Move up slightly to prevent overlap with the stage buttons */
-    top: 150px; 
+    top: 200px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-}
-
-#community-cards {
-    /* For community cards, use gap to space them out without overlap */
-    gap: 10px; 
+    gap: 15px;
 }
 
 #community-cards img {
-    margin: 0; /* Remove horizontal margin from general .hand img style */
+    margin: 0;
 }
 
-/* ------------------ Dealer & Player Positioning ------------------ */
+/* ------------------ Dealer & Players ------------------ */
 
 #dealer {
     position: absolute;
-    top: 20px;
+    top: 25px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -90,109 +84,116 @@ h1 {
 
 #reveille {
     width: 100px;
-    border: 5px solid white;
+    border: 4px solid white;
     border-radius: 50%;
-    margin-bottom: 5px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    margin-bottom: 8px;
+    box-shadow: 0 0 20px rgba(255,255,255,0.4);
+    background: #fff;
 }
 
 .player-slot {
     position: absolute;
-    width: 150px;
+    width: 160px;
     text-align: center;
 }
 
 .player-label {
-    margin-top: 5px;
+    margin-top: 8px;
     font-size: 0.9em;
     font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 5px black;
 }
 
 /* Player 1 (You) */
 #player-1 {
-    bottom: 100px;
+    bottom: 60px;
     left: 50%;
     transform: translateX(-50%);
-    width: auto;
 }
 
 #player-cards-1 img:hover {
-    transform: translateY(-10px) scale(1.05);
-    z-index: 10;
+    transform: translateY(-15px) scale(1.1);
 }
 
-/* Opponent Slot Positions (Adjusted to avoid controls) */
-/* Player 2 is now lower-left */
-.player-slot.pos-2 { top: 300px; left: 50px; } 
-.player-slot.pos-3 { top: 180px; left: 50px; }
-.player-slot.pos-4 { top: 80px; left: 200px; }
-.player-slot.pos-5 { top: 80px; right: 200px; }
-.player-slot.pos-6 { top: 180px; right: 50px; }
-/* If you ever add more players: */
-/* .player-slot.pos-7 { top: 300px; right: 50px; } */
+/* Opponent Slots */
+.player-slot.pos-2 { top: 330px; left: 60px; } 
+.player-slot.pos-3 { top: 200px; left: 30px; }
+.player-slot.pos-4 { top: 90px; left: 210px; }
+.player-slot.pos-5 { top: 90px; right: 210px; }
+.player-slot.pos-6 { top: 200px; right: 30px; }
+.player-slot.pos-7 { top: 330px; right: 60px; }
 
+/* ------------------ Controls ------------------ */
 
-/* Player Control Panel (Start Game/Opponent Count) */
 #controls {
-    text-align: center;
     position: absolute;
-    bottom: 20px;
+    bottom: 25px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10; /* Keep controls on top of anything else */
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 25px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
 #num-players {
-    width: 40px;
-    padding: 5px;
-    margin-right: 10px;
-    border-radius: 4px;
+    width: 50px;
+    padding: 6px;
+    border-radius: 6px;
     border: none;
     text-align: center;
+    background: #222;
+    color: white;
 }
 
-/* Staged Deal Buttons */
+/* ------------------ Stage Buttons ------------------ */
+
 #stage-buttons {
     position: absolute;
-    /* Positioned centrally between community cards and player 1 */
-    top: 350px;
+    bottom: 110px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap; 
+    gap: 15px;
+    z-index: 9;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* ------------------ Button Styles ------------------ */
+/* ------------------ Buttons ------------------ */
 
 button {
-    background: #a30000;
+    background: linear-gradient(180deg, #b30000, #6e0000);
     color: white;
     border: none;
     padding: 12px 25px;
-    margin-top: 15px;
+    margin-top: 5px;
     border-radius: 30px;
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
-    box-shadow: 0 5px #7a0000;
-    transition: all 0.1s;
+    box-shadow: 0 5px #5a0000;
+    transition: all 0.2s;
     letter-spacing: 1px;
 }
+
 button:hover {
-    background: #c20000;
+    background: linear-gradient(180deg, #d40000, #8b0000);
+    transform: scale(1.05);
 }
+
 button:active {
-    box-shadow: 0 2px #7a0000;
     transform: translateY(3px);
+    box-shadow: 0 2px #5a0000;
 }
 
 button:disabled {
-    background: #333;
+    background: #444;
     box-shadow: none;
     cursor: not-allowed;
+    transform: none;
 }
