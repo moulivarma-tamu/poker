@@ -35,17 +35,43 @@ function shuffle(array) {
 function createCardElement(card, faceUp = true) {
   const div = document.createElement('div');
   div.className = `card ${faceUp ? suitColors[card.suit] : 'face-down'}`;
-  
-  if (faceUp) {
-    div.innerHTML = `
-      <div style="font-size: 0.6em; align-self: flex-start; margin: 5px 0 0 8px;">${card.value}</div>
-      <div>${suitSymbols[card.suit]}</div>
-      <div style="font-size: 0.6em; align-self: flex-end; margin: 0 8px 5px 0; transform: rotate(180deg);">${card.value}</div>
-    `;
-  } else {
-    div.textContent = '🎴';
+
+  // Helper maps to match filenames in assets folder
+  function suitToName(s) {
+    switch (s) {
+      case 'H': return 'Hearts';
+      case 'S': return 'Spades';
+      case 'D': return 'Diamonds';
+      case 'C': return 'Clubs';
+      default: return 'Other';
+    }
   }
-  
+
+  function valueToName(v) {
+    if (v === 'A') return 'Ace';
+    if (v === 'K') return 'King';
+    if (v === 'Q') return 'Queen';
+    if (v === 'J') return 'Jack';
+    return v; // numbers (2-10)
+  }
+
+  if (faceUp) {
+    const suitName = suitToName(card.suit);
+    const valueName = valueToName(card.value);
+    const filename = `Suit=${suitName}, Number=${valueName}.png`;
+    const img = document.createElement('img');
+    img.src = `assets/${filename}`;
+    img.alt = `${card.value}${card.suit}`;
+    div.appendChild(img);
+  } else {
+    // Prefer blue back if available
+    const backFilename = 'Suit=Other, Number=Back Blue.png';
+    const img = document.createElement('img');
+    img.src = `assets/${backFilename}`;
+    img.alt = 'card back';
+    div.appendChild(img);
+  }
+
   return div;
 }
 
@@ -85,9 +111,11 @@ function setupPlayerSlots(numPlayers) {
 
 function updateChips(playerId, amount) {
   if (playerId === 'dealer') {
-    document.getElementById('dealer-chips').textContent = `$${amount}`;
+    const el = document.getElementById('dealer-chips');
+    if (el) el.textContent = `$${amount}`; // dealer may not have a chips box
   } else {
-    document.getElementById(`player-chips-${playerId}`).textContent = `$${amount}`;
+    const el = document.getElementById(`player-chips-${playerId}`);
+    if (el) el.textContent = `$${amount}`;
   }
 }
 
@@ -98,11 +126,11 @@ function updateStatus(playerId, status) {
   } else {
     el = document.getElementById(`player-status-${playerId}`);
   }
-  
-  if (el) {
-    el.textContent = status;
-    el.className = 'player-status' + (status.includes('Turn') || status.includes('Thinking') ? ' active' : '');
-  }
+
+  if (!el) return; // nothing to update for dealer if the element was removed
+
+  el.textContent = status;
+  el.className = 'player-status' + (status.includes('Turn') || status.includes('Thinking') ? ' active' : '');
 }
 
 function updatePot() {
@@ -125,7 +153,8 @@ async function startGame() {
   
   // Clear table
   document.getElementById('community-cards').innerHTML = "";
-  document.getElementById('dealer-cards').innerHTML = "";
+  const dealerCardsEl = document.getElementById('dealer-cards');
+  if (dealerCardsEl) dealerCardsEl.innerHTML = "";
   document.getElementById('player-cards-1').innerHTML = "";
   
   // Reset all player slots
@@ -176,7 +205,10 @@ async function startGame() {
   for (let player of gameState.players) {
     player.cards = [gameState.deck[index++], gameState.deck[index++]];
     const containerId = player.id === 'dealer' ? 'dealer-cards' : `player-cards-${player.id}`;
-    displayCards(containerId, player.cards, player.isHuman);
+    // Only display if the container exists in DOM (dealer may not have a container)
+    if (document.getElementById(containerId)) {
+      displayCards(containerId, player.cards, player.isHuman);
+    }
   }
   
   // Community cards
@@ -360,7 +392,9 @@ async function showdown() {
   for (let player of gameState.players) {
     if (!player.folded) {
       const containerId = player.id === 'dealer' ? 'dealer-cards' : `player-cards-${player.id}`;
-      displayCards(containerId, player.cards, true);
+      if (document.getElementById(containerId)) {
+        displayCards(containerId, player.cards, true);
+      }
     }
   }
   

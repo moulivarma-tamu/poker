@@ -78,26 +78,25 @@ h1 {
   position: relative;
 }
 
+
 .card {
-  width: 65px;
-  height: 90px;
+  width: 60px; /* smaller card width */
+  height: 80px; /* smaller card height */
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1.8em;
-  font-weight: bold;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-  border: 2px solid #ddd;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+  border: 1px solid #ddd;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s;
   cursor: pointer;
 }
 
 .card:hover {
-  transform: translateY(-20px) scale(1.15);
-  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
+  transform: translateY(-8px) scale(1.08);
+  box-shadow: 0 8px 22px rgba(255, 215, 0, 0.35);
   z-index: 100;
 }
 
@@ -121,9 +120,16 @@ h1 {
 }
 
 #community-cards .card {
-  width: 70px;
-  height: 97px;
-  animation: cardReveal 0.5s ease-out;
+  width: 60px;
+  height: 80px;
+  animation: cardReveal 0.45s ease-out;
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 @keyframes cardReveal {
@@ -164,39 +170,39 @@ h1 {
 
 .player-slot {
   position: absolute;
-  width: 180px;
+  width: 120px; /* further reduced width */
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.18s ease;
 }
 
 .player-info {
   background: rgba(0, 0, 0, 0.7);
   border: 2px solid #ffd700;
-  border-radius: 15px;
-  padding: 8px 12px;
-  margin-top: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 4px 6px; /* even tighter padding to reduce height */
+  margin-top: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
 }
 
 .player-name {
-  font-size: 0.95em;
-  font-weight: bold;
+  font-size: 0.88em; /* slightly smaller */
+  font-weight: 700;
   color: #ffd700;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-  margin-bottom: 4px;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.38);
+  margin-bottom: 2px;
 }
 
 .player-chips {
-  font-size: 0.85em;
+  font-size: 0.80em;
   color: #4ade80;
   font-weight: 600;
 }
 
 .player-status {
-  font-size: 0.75em;
+  font-size: 0.6em;
   color: #94a3b8;
-  margin-top: 3px;
-  min-height: 16px;
+  margin-top: 2px;
+  min-height: 12px;
 }
 
 .player-status.active {
@@ -230,7 +236,7 @@ h1 {
 
 #pot-display {
   position: absolute;
-  top: 42%;
+  top: -3.5%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: rgba(0, 0, 0, 0.8);
@@ -269,7 +275,7 @@ h1 {
 
 #action-buttons {
   position: absolute;
-  bottom: 130px;
+  bottom: 35px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -335,7 +341,7 @@ button:disabled {
 
 #bet-controls {
   position: absolute;
-  bottom: 130px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.85);
@@ -356,6 +362,7 @@ button:disabled {
   border-radius: 5px;
   background: #1f2937;
   outline: none;
+  appearance: none;
   -webkit-appearance: none;
 }
 
