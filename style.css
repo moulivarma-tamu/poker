@@ -1,0 +1,106 @@
+/* Import a cleaner font for a modern look */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+    /* Richer, deeper table green */
+    background-color: #003311; 
+    color: white;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+    /* Full viewport height to center content */
+    min-height: 100vh; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #ffd700; /* Gold color for heading */
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+}
+
+#table {
+    /* Creates the circular table shape */
+    background-color: #00441b; 
+    border: 15px solid #4a2500; /* Wood border */
+    border-radius: 50%; 
+    width: 800px; /* Adjust size as needed */
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5) inset; /* Inner shadow for depth */
+    position: relative;
+}
+
+/* Dealer (Reveille) at the top */
+#dealer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Player at the bottom */
+#player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#reveille {
+    width: 120px;
+    border: 5px solid white;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.hand {
+    display: flex;
+    justify-content: center;
+    min-height: 120px; /* Reserve space for cards */
+}
+
+.hand img {
+    width: 90px;
+    margin: 0 -20px 0 0; /* Overlap cards for a fanned look */
+    border-radius: 8px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+    transition: transform 0.3s ease-out; /* Add animation */
+}
+
+.hand img:last-child {
+    margin-right: 0; /* No margin on the last card */
+}
+
+/* A slight hover effect for the player's cards */
+#player-cards img:hover {
+    transform: translateY(-10px) scale(1.05);
+    z-index: 10;
+}
+
+button {
+    background: #a30000; /* Deeper maroon/red */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    margin-top: 30px;
+    border-radius: 30px; /* Pill-shaped button */
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 5px #7a0000; /* 3D effect */
+    transition: all 0.1s;
+    letter-spacing: 1px;
+}
+button:hover {
+    background: #c20000;
+}
+button:active {
+    box-shadow: 0 2px #7a0000;
+    transform: translateY(3px); /* Press-down effect */
+}
